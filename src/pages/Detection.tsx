@@ -359,7 +359,7 @@ const Detection = () => {
                   </div>
                   <p className="text-sm text-gray-500">
                     Supported formats: JPEG, PNG, GIF, BMP, TIFF (max 5MB)
-                  </p>
+                    </p>
                 </div>
               )}
             </div>
@@ -436,7 +436,7 @@ const Detection = () => {
                     </div>
                     <p className="text-xl font-bold text-gray-900">{result.confidence.toFixed(1)}%</p>
                   </div>
-                </div>
+                  </div>
 
                 <div className="bg-gray-50 rounded-lg p-4">
                   <div className="flex items-center space-x-2 text-gray-600 mb-2">
@@ -444,16 +444,16 @@ const Detection = () => {
                     <span className="font-medium">Treatment Recommendation</span>
                   </div>
                   <p className="text-gray-900">{result.treatment}</p>
-                </div>
+                  </div>
 
-                {result.class_probabilities && (
+                  {result.class_probabilities && (
                   <div className="bg-gray-50 rounded-lg p-4">
                     <h3 className="font-medium text-gray-900 mb-3">Top Predictions</h3>
-                    <div className="space-y-2">
-                      {Object.entries(result.class_probabilities)
+                      <div className="space-y-2">
+                        {Object.entries(result.class_probabilities)
                         .sort(([, a], [, b]) => b - a)
-                        .slice(0, 3)
-                        .map(([pest, probability]) => (
+                          .slice(0, 3)
+                          .map(([pest, probability]) => (
                           <div key={pest} className="flex items-center justify-between">
                             <span className="text-gray-600">{pest}</span>
                             <span className="font-medium text-gray-900">
@@ -461,26 +461,26 @@ const Detection = () => {
                             </span>
                           </div>
                         ))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
                 {result.inference_time && (
                   <div className="bg-gray-50 rounded-lg p-4">
                     <div className="flex items-center space-x-2 text-gray-600 mb-2">
                       <Clock className="w-5 h-5" />
                       <span className="font-medium">Inference Time</span>
-                    </div>
+                </div>
                     <p className="text-gray-900">{result.inference_time.toFixed(0)}ms</p>
-                  </div>
-                )}
+              </div>
+            )}
 
                 {result.model_version && (
                   <div className="text-sm text-gray-500 text-right">
                     Model Version: {result.model_version}
                   </div>
                 )}
-              </div>
+                </div>
             ) : (
               <div className="bg-white rounded-xl shadow-lg p-6 text-center">
                 <Image className="w-16 h-16 text-gray-400 mx-auto mb-4" />

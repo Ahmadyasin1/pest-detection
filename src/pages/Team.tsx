@@ -21,10 +21,14 @@ const Team = () => {
     {
       name: 'Eman Sarfraz',
       id: 'L1F22BSAI0034',
-      role: 'Data Scientist',
-      description: 'Expert in data preprocessing and feature engineering. Specialized in agricultural data analysis and pest classification.',
+      role: 'AI Engineer',
+      description: 'Develops intelligent applications leveraging machine learning, neural networks, language understanding, and visual recognition.',
       image: '/team-images/eman-sarfraz.jpg',
       fallbackImage: 'https://images.pexels.com/photos/3763188/pexels-photo-3763188.jpeg?auto=compress&cs=tinysrgb&w=400',
+      links: {
+        github: 'https://github.com/Eman-Sarfraz/',
+        linkedin: 'https://www.linkedin.com/in/eman-sarfraz-146a8728a/'
+      },
       skills: ['Data Analysis', 'Feature Engineering', 'Python', 'Statistical Modeling', 'Agriculture Domain']
     },
     {
@@ -39,8 +43,8 @@ const Team = () => {
     {
       name: 'Abdul Rehman',
       id: 'L1F22BSAI0031',
-      role: 'Full Stack Developer',
-      description: 'Responsible for frontend development and system integration. Expert in creating user-friendly interfaces for AI applications.',
+      role: 'Data Scientist',
+      description: 'Expert in data preprocessing and feature engineering. Specialized in agricultural data analysis and pest classification.',
       image: '/team-images/abdul-rehman.jpg',
       fallbackImage: 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=400',
       skills: ['React.js', 'Node.js', 'UI/UX Design', 'System Integration', 'API Integration']
@@ -58,7 +62,7 @@ const Team = () => {
     const [imageError, setImageError] = React.useState(false);
     
     return (
-      <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary-100 to-primary-200 p-1 mb-6">
+      <div className="w-32 h-32 rounded-full bg-gradient-to-br from-primary-100 to-primary-200 p-1 mb-6">
         <img
           src={imageError ? member.fallbackImage : member.image}
           alt={member.name}

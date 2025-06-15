@@ -67,13 +67,13 @@ const Footer = () => {
               <p>University Project</p>
               <p>AI & Machine Learning</p>
               <p>Agriculture Technology</p>
-              <p className="text-primary-400 font-medium">© 2024 AgroPest AI Team</p>
+              <p className="text-primary-400 font-medium">© 2025 AgroPest AI Team</p>
             </div>
           </div>
         </div>
 
         <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-          <p>&copy; 2024 AgroPest AI. Built with ❤️ by Team AgroPest for advancing agricultural technology.</p>
+          <p>&copy; 2025 AgroPest AI. Built with ❤️ by Team AgroPest for advancing agricultural technology.</p>
         </div>
       </div>
     </footer>

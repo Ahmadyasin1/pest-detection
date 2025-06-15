@@ -16,7 +16,8 @@ import {
   Eye,
   Presentation,
   ExternalLink,
-  X
+  X,
+  BookOpen
 } from 'lucide-react';
 import { 
   LineChart, 
@@ -34,7 +35,7 @@ import {
 } from 'recharts';
 
 const Reports: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'proposal' | 'slides'>('proposal');
+  const [activeTab, setActiveTab] = useState<'proposal' | 'slides' | 'final'>('proposal');
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   const detectionStats = [
@@ -169,6 +170,57 @@ const Reports: React.FC = () => {
     </div>
   );
 
+  const renderFinalReport = () => (
+    <div className="bg-white rounded-lg shadow-md p-6">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Final Project Report</h2>
+          <p className="text-gray-600 mt-2">Comprehensive documentation of the Pest Detection project including methodology, results, and conclusions.</p>
+        </div>
+        <div className="flex space-x-4">
+          <a
+            href="/reports/Pest_Detection-Report.pdf"
+            download
+            className="inline-flex items-center px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors"
+          >
+            <Download className="w-5 h-5 mr-2" />
+            Download PDF
+          </a>
+          <a
+            href="/reports/Pest_Detection-Report.pdf"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 transition-colors"
+          >
+            <ExternalLink className="w-5 h-5 mr-2" />
+            Open in New Tab
+          </a>
+        </div>
+      </div>
+      
+      <div className="aspect-w-16 aspect-h-9 mb-6">
+        <iframe
+          src="/reports/Pest_Detection-Report.pdf"
+          className="w-full h-full rounded-lg"
+          title="Final Project Report"
+        />
+      </div>
+
+      <div className="bg-gray-50 rounded-lg p-4">
+        <div className="flex items-center justify-between text-gray-600">
+          <div className="flex items-center">
+            <FileText className="w-5 h-5 mr-2" />
+            <span>File size: 2.4 MB</span>
+          </div>
+          <div className="flex items-center">
+            <BookOpen className="w-5 h-5 mr-2" />
+            <span>45 pages</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="container mx-auto px-4 py-8">
       <motion.div
@@ -200,10 +252,22 @@ const Reports: React.FC = () => {
           >
             Presentation Slides
           </button>
+          <button
+            onClick={() => setActiveTab('final')}
+            className={`px-4 py-2 rounded-md transition-colors ${
+              activeTab === 'final'
+                ? 'bg-primary-600 text-white'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            Final Report
+          </button>
         </div>
 
         {/* Content */}
-        {activeTab === 'proposal' ? renderProposal() : renderSlides()}
+        {activeTab === 'proposal' && renderProposal()}
+        {activeTab === 'slides' && renderSlides()}
+        {activeTab === 'final' && renderFinalReport()}
 
         {/* Fullscreen Modal */}
         {isFullscreen && (
