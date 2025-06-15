@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Github, Linkedin, Globe, Mail, User } from 'lucide-react';
+import { Github, Linkedin, Globe, User } from 'lucide-react';
 
 const Team = () => {
   const teamMembers = [
