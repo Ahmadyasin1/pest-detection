@@ -72,7 +72,7 @@ const THROTTLE_DELAY = 5000;
 let lastRequestTime = 0;
 
 // Throttled API request function
-const throttledRequest = async <T>(endpoint: string): Promise<T> => {
+const throttledRequest = async <T extends unknown>(endpoint: string): Promise<T> => {
   const now = Date.now();
   const timeSinceLastRequest = now - lastRequestTime;
   
