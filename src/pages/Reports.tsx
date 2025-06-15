@@ -1,16 +1,23 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Download, FileText, Presentation, ExternalLink, X, BookOpen } from 'lucide-react';
 import { 
   FileBarChart, 
   TrendingUp, 
   Calendar,
   Filter,
+  Download,
   BarChart3,
   PieChart,
   Activity,
   Target,
-  Clock
+  Clock,
+  Users,
+  FileText,
+  Eye,
+  Presentation,
+  ExternalLink,
+  X,
+  BookOpen
 } from 'lucide-react';
 import { 
   LineChart, 
@@ -30,6 +37,83 @@ import {
 const Reports: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'proposal' | 'slides' | 'final'>('proposal');
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const detectionStats = [
+    { label: 'Total Detections', value: '1,247', change: '+12.5%', icon: Target },
+    { label: 'Accuracy Rate', value: '94.7%', change: '+2.1%', icon: TrendingUp },
+    { label: 'Processing Time', value: '127ms', change: '-8.3%', icon: Clock },
+    { label: 'Active Users', value: '89', change: '+15.2%', icon: Users }
+  ];
+
+  const weeklyDetections = [
+    { day: 'Mon', detections: 45, accuracy: 95.2 },
+    { day: 'Tue', detections: 38, accuracy: 94.8 },
+    { day: 'Wed', detections: 52, accuracy: 96.1 },
+    { day: 'Thu', detections: 41, accuracy: 93.7 },
+    { day: 'Fri', detections: 67, accuracy: 95.9 },
+    { day: 'Sat', detections: 34, accuracy: 94.3 },
+    { day: 'Sun', detections: 29, accuracy: 95.8 }
+  ];
+
+  const pestDistribution = [
+    { name: 'Aphids', value: 28, color: '#22c55e' },
+    { name: 'Caterpillars', value: 23, color: '#3b82f6' },
+    { name: 'Whiteflies', value: 19, color: '#f59e0b' },
+    { name: 'Spider Mites', value: 12, color: '#ef4444' },
+    { name: 'Thrips', value: 10, color: '#8b5cf6' },
+    { name: 'Others', value: 8, color: '#6b7280' }
+  ];
+
+  const monthlyTrends = [
+    { month: 'Jan', detections: 234, accuracy: 93.2 },
+    { month: 'Feb', detections: 298, accuracy: 94.1 },
+    { month: 'Mar', detections: 412, accuracy: 94.8 },
+    { month: 'Apr', detections: 389, accuracy: 95.2 },
+    { month: 'May', detections: 456, accuracy: 94.7 },
+    { month: 'Jun', detections: 523, accuracy: 95.6 }
+  ];
+
+  const COLORS = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#6b7280'];
+
+  const availableReports = [
+    {
+      id: 'project-report',
+      title: 'Complete Project Report',
+      description: 'Comprehensive documentation of the AgroPest AI project including methodology, results, and conclusions.',
+      type: 'PDF',
+      size: '2.4 MB',
+      pages: 45,
+      lastUpdated: '2024-01-15'
+    },
+    {
+      id: 'technical-report',
+      title: 'Technical Implementation Report',
+      description: 'Detailed technical documentation covering model architecture, training process, and deployment.',
+      type: 'PDF',
+      size: '1.8 MB',
+      pages: 32,
+      lastUpdated: '2024-01-14'
+    },
+    {
+      id: 'performance-report',
+      title: 'Model Performance Analysis',
+      description: 'In-depth analysis of model performance metrics, accuracy evaluation, and comparison studies.',
+      type: 'PDF',
+      size: '1.2 MB',
+      pages: 24,
+      lastUpdated: '2024-01-13'
+    }
+  ];
+
+  const handleViewReport = (reportId: string) => {
+    // In a real implementation, this would open the actual PDF
+    console.log(`Viewing report: ${reportId}`);
+  };
+
+  const handleDownloadReport = (reportId: string) => {
+    // In a real implementation, this would download the actual PDF
+    console.log(`Downloading report: ${reportId}`);
+  };
 
   const renderProposal = () => (
     <div className="bg-white rounded-lg shadow-md p-6">

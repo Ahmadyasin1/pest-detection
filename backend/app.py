@@ -479,13 +479,13 @@ def get_metrics():
 def model_info():
     """Get detailed model information"""
     try:
-        if ort_session is None:
-            return jsonify({
+    if ort_session is None:
+        return jsonify({
                 "success": False,
-                "error": "Model not loaded",
+            "error": "Model not loaded",
                 "message": f"ONNX model '{ONNX_MODEL_PATH}' could not be loaded."
-            }), 500
-        
+        }), 500
+    
         # Get model metadata
         model_metadata = {
             "version": MODEL_CONFIG['version'],

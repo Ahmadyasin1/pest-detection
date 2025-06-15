@@ -1,6 +1,22 @@
 import React, { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Camera, RefreshCw, BarChart2, Info, Upload, FileImage, AlertCircle, Zap, Shield, Thermometer, Clock, Image } from 'lucide-react';
+import { 
+  Upload, 
+  Image, 
+  CheckCircle, 
+  AlertCircle, 
+  Info,
+  Camera,
+  FileImage,
+  Zap,
+  WifiOff,
+  Server,
+  RefreshCw,
+  Shield,
+  Thermometer,
+  Clock,
+  BarChart2
+} from 'lucide-react';
 
 interface PredictionResult {
   success: boolean;
