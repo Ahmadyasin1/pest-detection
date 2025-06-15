@@ -1,6 +1,24 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FileText, Download, ChevronRight, ChevronLeft, ExternalLink } from 'lucide-react';
+import { 
+  Download, 
+  Play, 
+  Code, 
+  BarChart3,
+  Brain,
+  Target,
+  TrendingUp,
+  CheckCircle,
+  ChevronRight,
+  ExternalLink,
+  Eye,
+  FileCode,
+  Loader2
+} from 'lucide-react';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import remarkGfm from 'remark-gfm';
+import ReactMarkdown from 'react-markdown';
 
 const Notebook = () => {
   const [activeNotebook, setActiveNotebook] = useState<'single' | 'multiple'>('single');

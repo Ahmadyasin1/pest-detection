@@ -2,44 +2,33 @@ import React, { useState, useEffect, useCallback, ReactElement } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  AreaChart,
-  Area,
-  BarChart,
-  Bar,
+  BarChart2,
   LineChart,
-  Line,
   PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  Radar
-} from 'recharts';
-import {
   Activity,
-  AlertTriangle,
-  BarChart3,
-  Clock,
-  Cpu,
-  FileText,
-  HardDrive,
-  Info,
-  Server,
-  TrendingUp,
   AlertCircle,
+  CheckCircle,
+  Clock,
+  RefreshCw,
   Zap,
   Shield,
-  Layers,
+  Thermometer,
+  Image,
+  FileImage,
+  Upload,
+  Info,
+  Camera,
+  Users,
   Settings,
-  RefreshCw,
+  BarChart3,
+  Brain,
+  Target,
+  TrendingUp,
+  ChevronRight,
+  ExternalLink,
+  Eye,
+  FileCode,
+  Loader2,
   ChevronDown,
   ChevronUp,
   Maximize2,
@@ -51,6 +40,20 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@radix-ui/react-tooltip';
+import {
+  BarChart,
+  Bar,
+  LineChart as RechartsLineChart,
+  Line,
+  PieChart as RechartsPieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer
+} from 'recharts';
 
 // API Configuration
 const API_BASE_URL = 'https://cropbugdetection.pythonanywhere.com';
@@ -124,20 +127,6 @@ interface ApiError {
 }
 
 // Color schemes
-const COLORS = {
-  primary: '#3B82F6',
-  success: '#10B981',
-  warning: '#F59E0B',
-  error: '#EF4444',
-  background: '#F3F4F6',
-  card: '#FFFFFF',
-  text: {
-    primary: '#1F2937',
-    secondary: '#6B7280',
-    light: '#9CA3AF'
-  }
-};
-
 const CHART_COLORS = [
   '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6',
   '#EC4899', '#06B6D4', '#84CC16', '#F97316', '#6366F1'
@@ -182,12 +171,9 @@ const ModelAnalysis = (): ReactElement => {
   const [metrics, setMetrics] = useState<ModelMetrics | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [lastUpdateTime, setLastUpdateTime] = useState<Date>(new Date());
   const [isServerHealthy, setIsServerHealthy] = useState<boolean>(true);
   const [retryCount, setRetryCount] = useState(0);
   const [isRetrying, setIsRetrying] = useState(false);
-  const [selectedTimeRange, setSelectedTimeRange] = useState<'1h' | '6h' | '24h' | '7d'>('1h');
-  const [selectedMetric, setSelectedMetric] = useState<'all' | 'cpu' | 'memory' | 'inference' | 'requests'>('all');
   const [expandedSections, setExpandedSections] = useState<{
     performance: boolean;
     predictions: boolean;
@@ -209,7 +195,6 @@ const ModelAnalysis = (): ReactElement => {
 
       setMetrics(data.metrics);
       setError(null);
-      setLastUpdateTime(new Date());
       setRetryCount(0);
       setIsRetrying(false);
     } catch (error: any) {
