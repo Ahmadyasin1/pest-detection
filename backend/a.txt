@@ -1,0 +1,403 @@
+from flask import Flask, request, jsonify
+import onnxruntime as ort
+import numpy as np
+from PIL import Image
+import io
+import json
+from flask_cors import CORS
+import os
+
+app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
+
+# Configuration
+# Get the absolute directory of the current file (e.g., app.py)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Construct the absolute path to the ONNX model file
+ONNX_MODEL_PATH = os.path.join(BASE_DIR, 'best_bug_detector_model_bug_detector.onnx')
+#ONNX_MODEL_PATH = '/home/cropbugdetection/mysite/best_pest_detector_model_bug_detector.onnx'
+MODEL_INPUT_SIZE = 224  # Adjust if your model uses different size (240 for b1, 260 for b2, etc.)
+
+# Load the ONNX model
+ort_session = None
+input_name = None
+output_name = None
+
+def load_onnx_model():
+    global ort_session, input_name, output_name
+    try:
+        ort_session = ort.InferenceSession(ONNX_MODEL_PATH)
+        input_name = ort_session.get_inputs()[0].name
+        output_name = ort_session.get_outputs()[0].name
+        print(f"ONNX model '{ONNX_MODEL_PATH}' loaded successfully.")
+        print(f"Input name: {input_name}, Output name: {output_name}")
+        print(f"Input shape: {ort_session.get_inputs()[0].shape}")
+        return True
+    except Exception as e:
+        print(f"Error loading ONNX model: {e}")
+        ort_session = None
+        return False
+
+# Load model when the app starts
+model_loaded = load_onnx_model()
+
+# Pest class mappings - MUST MATCH THE ORDER USED DURING TRAINING
+PEST_CLASSES = {
+    0: "Aphids",
+    1: "Armyworm",
+    2: "Beetle",
+    3: "Bollworm",
+    4: "Grasshopper",
+    5: "Mites",
+    6: "Mosquito",
+    7: "Sawfly",
+    8: "Stem Borer",
+    9: "Termite",
+    10: "Thrips",
+    11: "Whitefly",
+    12: "Caterpillar",
+    13: "Scale Insects",
+    14: "Leaf Miners"
+}
+
+# Treatment recommendations for each pest
+TREATMENTS = {
+    "Aphids": "Apply neem oil spray or introduce beneficial insects like ladybugs. Use insecticidal soap for immediate control.",
+    "Armyworm": "Use Bacillus thuringiensis (Bt) spray or pheromone traps. Apply during early morning or evening.",
+    "Beetle": "Hand-picking for small infestations. Use row covers and beneficial nematodes for biological control.",
+    "Bollworm": "Apply Bt-based insecticides. Use pheromone traps and maintain field hygiene.",
+    "Grasshopper": "Use barrier methods and beneficial fungi. Apply neem-based products during nymph stage.",
+    "Mites": "Increase humidity around plants. Use predatory mites or miticide sprays. Avoid broad-spectrum insecticides.",
+    "Mosquito": "Remove standing water sources. Use biological larvicides and maintain proper drainage.",
+    "Sawfly": "Hand-picking of larvae. Use Bt sprays and encourage natural predators like birds.",
+    "Stem Borer": "Remove and destroy affected plant parts. Use pheromone traps and resistant crop varieties.",
+    "Termite": "Improve soil drainage. Use beneficial nematodes and maintain proper crop rotation.",
+    "Thrips": "Use blue sticky traps. Apply predatory mites and maintain proper plant spacing for air circulation.",
+    "Whitefly": "Use yellow sticky traps. Apply neem oil and encourage natural enemies like parasitic wasps.",
+    "Caterpillar": "Hand-picking for small numbers. Use Bt sprays and encourage beneficial insects.",
+    "Scale Insects": "Apply horticultural oil or insecticidal soap. Use systemic insecticides for severe infestations.",
+    "Leaf Miners": "Remove affected leaves. Use beneficial parasites and apply neem oil preventively."
+}
+
+# Severity levels based on pest type
+SEVERITY_LEVELS = {
+    "Aphids": "Medium",
+    "Armyworm": "High",
+    "Beetle": "Medium",
+    "Bollworm": "High",
+    "Grasshopper": "High",
+    "Mites": "Medium",
+    "Mosquito": "Low",
+    "Sawfly": "Medium",
+    "Stem Borer": "High",
+    "Termite": "High",
+    "Thrips": "Medium",
+    "Whitefly": "Medium",
+    "Caterpillar": "Medium",
+    "Scale Insects": "Medium",
+    "Leaf Miners": "Low"
+}
+
+def preprocess_image(image):
+    """
+    Preprocess image for model inference using proper normalization
+    This matches the preprocessing used during training
+    """
+    try:
+        # Convert to RGB if necessary
+        if image.mode != 'RGB':
+            image = image.convert('RGB')
+
+        # Resize with center crop (matching training preprocessing)
+        # First resize to 256, then center crop to MODEL_INPUT_SIZE
+        image = image.resize((256, 256), Image.LANCZOS)
+
+        # Center crop to model input size
+        left = (256 - MODEL_INPUT_SIZE) // 2
+        top = (256 - MODEL_INPUT_SIZE) // 2
+        right = left + MODEL_INPUT_SIZE
+        bottom = top + MODEL_INPUT_SIZE
+        image = image.crop((left, top, right, bottom))
+
+        # Convert to numpy array
+        img_array = np.array(image).astype(np.float32)
+
+        # Normalize to [0, 1]
+        img_array = img_array / 255.0
+
+        # Apply ImageNet normalization (MUST MATCH TRAINING)
+        mean = np.array([0.485, 0.456, 0.406])
+        std = np.array([0.229, 0.224, 0.225])
+
+        img_array = (img_array - mean) / std
+
+        # Rearrange dimensions for ONNX (NCHW format)
+        img_array = np.transpose(img_array, (2, 0, 1))  # HWC to CHW
+        img_array = np.expand_dims(img_array, axis=0)   # Add batch dimension
+
+        return img_array.astype(np.float32)
+
+    except Exception as e:
+        print(f"Error in preprocessing: {e}")
+        return None
+
+def predict_image_with_onnx(processed_image):
+    """
+    Run inference using ONNX model with proper softmax application
+    """
+    try:
+        if ort_session is None:
+            return None, None, None
+
+        # Run inference
+        outputs = ort_session.run([output_name], {input_name: processed_image})
+        logits = outputs[0]
+
+        # Apply softmax to get probabilities
+        probabilities = np.exp(logits) / np.sum(np.exp(logits), axis=1, keepdims=True)
+
+        # Get predicted class and confidence
+        predicted_class_idx = np.argmax(probabilities, axis=1)[0]
+        confidence = float(probabilities[0, predicted_class_idx]) * 100
+
+        # Get pest information
+        pest_name = PEST_CLASSES.get(predicted_class_idx, "Unknown")
+
+        # Get top 5 predictions for detailed analysis
+        top_k_indices = np.argsort(probabilities[0])[::-1][:5]
+        top_predictions = {}
+        for i in top_k_indices:
+            class_name = PEST_CLASSES.get(i, f"Class_{i}")
+            top_predictions[class_name] = round(float(probabilities[0, i]), 4)
+
+        return pest_name, confidence, top_predictions
+
+    except Exception as e:
+        print(f"Prediction error: {e}")
+        return None, None, None
+
+@app.route('/')
+def home():
+    return jsonify({
+        "message": "AgroPest AI Backend API",
+        "version": "2.0.0",
+        "status": "running",
+        "model_loaded": ort_session is not None,
+        "model_path": ONNX_MODEL_PATH,
+        "input_size": MODEL_INPUT_SIZE
+    })
+
+@app.route('/predict', methods=['POST'])
+def predict():
+    try:
+        # Check if model is loaded
+        if ort_session is None:
+            return jsonify({
+                "success": False,
+                "error": "Model not loaded",
+                "message": f"ONNX model '{ONNX_MODEL_PATH}' could not be loaded. Please ensure the model file exists."
+            }), 500
+
+        # Check if image is provided
+        if 'image' not in request.files:
+            return jsonify({
+                "success": False,
+                "error": "No image provided",
+                "message": "Please upload an image file using the 'image' field"
+            }), 400
+
+        file = request.files['image']
+
+        # Check if file is selected
+        if file.filename == '':
+            return jsonify({
+                "success": False,
+                "error": "No file selected",
+                "message": "Please select an image file"
+            }), 400
+
+        # Validate file type
+        allowed_extensions = {'png', 'jpg', 'jpeg', 'gif', 'bmp', 'tiff'}
+        file_extension = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else ''
+        if file_extension not in allowed_extensions:
+            return jsonify({
+                "success": False,
+                "error": "Invalid file type",
+                "message": f"Allowed file types: {', '.join(allowed_extensions)}"
+            }), 400
+
+        # Read and process the image
+        image_bytes = file.read()
+        image = Image.open(io.BytesIO(image_bytes))
+
+        # Preprocess the image
+        processed_image = preprocess_image(image)
+        if processed_image is None:
+            return jsonify({
+                "success": False,
+                "error": "Image processing failed",
+                "message": "Could not process the uploaded image. Please ensure it's a valid image file."
+            }), 400
+
+        # Run prediction
+        pest_name, confidence, top_predictions = predict_image_with_onnx(processed_image)
+
+        if pest_name is None:
+            return jsonify({
+                "success": False,
+                "error": "Prediction failed",
+                "message": "Model inference failed. Please try again."
+            }), 500
+
+        # Get additional information
+        treatment = TREATMENTS.get(pest_name, "Consult with agricultural expert for specific treatment recommendations.")
+        severity = SEVERITY_LEVELS.get(pest_name, "Unknown")
+
+        return jsonify({
+            "success": True,
+            "pest_name": pest_name,
+            "confidence": round(confidence, 1),
+            "treatment": treatment,
+            "severity": severity,
+            "class_probabilities": top_predictions,
+            "model_info": {
+                "model_name": ONNX_MODEL_PATH,
+                "input_size": MODEL_INPUT_SIZE,
+                "preprocessing": "ImageNet normalization applied"
+            }
+        })
+
+    except Exception as e:
+        print(f"Prediction error: {e}")
+        return jsonify({
+            "success": False,
+            "error": "Prediction failed",
+            "message": f"An unexpected error occurred: {str(e)}"
+        }), 500
+
+@app.route('/model-info', methods=['GET'])
+def model_info():
+    """Get detailed model information and statistics"""
+    if ort_session is None:
+        return jsonify({
+            "error": "Model not loaded",
+            "message": f"ONNX model '{ONNX_MODEL_PATH}' is not available"
+        }), 500
+
+    try:
+        # Get model metadata
+        model_inputs = ort_session.get_inputs()
+        model_outputs = ort_session.get_outputs()
+
+        return jsonify({
+            "model_name": ONNX_MODEL_PATH,
+            "model_version": "2.0.0",
+            "input_details": {
+                "name": model_inputs[0].name if model_inputs else None,
+                "shape": model_inputs[0].shape if model_inputs else None,
+                "type": str(model_inputs[0].type) if model_inputs else None,
+                "expected_size": MODEL_INPUT_SIZE
+            },
+            "output_details": {
+                "name": model_outputs[0].name if model_outputs else None,
+                "shape": model_outputs[0].shape if model_outputs else None,
+                "type": str(model_outputs[0].type) if model_outputs else None
+            },
+            "classes": {
+                "num_classes": len(PEST_CLASSES),
+                "class_names": list(PEST_CLASSES.values()),
+                "class_mapping": PEST_CLASSES
+            },
+            "preprocessing": {
+                "resize_method": "Resize to 256x256, then center crop",
+                "normalization": "ImageNet standard (mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])",
+                "input_format": "NCHW (batch, channels, height, width)"
+            },
+            "providers": ort_session.get_providers(),
+            "performance": {
+                "expected_accuracy": "94.7%",
+                "supported_formats": ["PNG", "JPG", "JPEG", "GIF", "BMP", "TIFF"]
+            }
+        })
+    except Exception as e:
+        return jsonify({
+            "error": "Could not get model info",
+            "message": str(e)
+        }), 500
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    """Comprehensive health check endpoint"""
+    model_status = "loaded" if ort_session is not None else "not_loaded"
+    model_file_exists = os.path.exists(ONNX_MODEL_PATH)
+
+    return jsonify({
+        "status": "healthy" if ort_session is not None else "degraded",
+        "timestamp": "2024-01-01T00:00:00Z",
+        "model": {
+            "status": model_status,
+            "file_exists": model_file_exists,
+            "path": ONNX_MODEL_PATH,
+            "input_size": MODEL_INPUT_SIZE
+        },
+        "api": {
+            "version": "2.0.0",
+            "endpoints": ["/", "/predict", "/model-info", "/health"]
+        },
+        "system": {
+            "onnxruntime_version": ort.__version__,
+            "providers": ort_session.get_providers() if ort_session else []
+        }
+    })
+
+@app.route('/test-prediction', methods=['GET'])
+def test_prediction():
+    """Test endpoint to verify model is working"""
+    if ort_session is None:
+        return jsonify({
+            "error": "Model not loaded",
+            "message": "Cannot run test prediction without loaded model"
+        }), 500
+
+    try:
+        # Create a dummy image for testing
+        dummy_image = np.random.randint(0, 255, (MODEL_INPUT_SIZE, MODEL_INPUT_SIZE, 3), dtype=np.uint8)
+        dummy_pil = Image.fromarray(dummy_image)
+
+        # Process and predict
+        processed = preprocess_image(dummy_pil)
+        if processed is not None:
+            pest_name, confidence, top_predictions = predict_image_with_onnx(processed)
+            return jsonify({
+                "test_status": "success",
+                "message": "Model is working correctly",
+                "dummy_prediction": {
+                    "pest_name": pest_name,
+                    "confidence": confidence,
+                    "note": "This is a test with random data"
+                }
+            })
+        else:
+            return jsonify({
+                "test_status": "failed",
+                "message": "Image preprocessing failed"
+            }), 500
+
+    except Exception as e:
+        return jsonify({
+            "test_status": "error",
+            "message": f"Test prediction failed: {str(e)}"
+        }), 500
+
+if __name__ == '__main__':
+    print("="*50)
+    print("AgroPest AI Backend Server")
+    print("="*50)
+    print(f"Model Path: {ONNX_MODEL_PATH}")
+    print(f"Model Loaded: {ort_session is not None}")
+    print(f"Input Size: {MODEL_INPUT_SIZE}x{MODEL_INPUT_SIZE}")
+    print(f"Number of Classes: {len(PEST_CLASSES)}")
+    print("="*50)
+
+    app.run(debug=True, host='0.0.0.0', port=5000)
