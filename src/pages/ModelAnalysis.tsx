@@ -2,6 +2,14 @@ import React, { useState, useEffect, useCallback, ReactElement } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
+  Server,
+  Cpu,
+  HardDrive,
+  Legend,
+  Layers,
+  FileText,
+  AlertTriangle,
+  ChevronLeft,
   BarChart2,
   LineChart,
   PieChart,
